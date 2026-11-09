@@ -6,7 +6,7 @@
 # instructions. Tests: tests/tgcd.c.
 #
 # Registers: a0 = a, a1 = b, a6 = the count of shared twos (shift),
-# t0 = the tested bit, or a during the swap.
+# t0 = the tested bit.
 
     .text
 
@@ -42,30 +42,35 @@ continue_s2:
 
     andi    t0, a0, 1           # a & 1
     bnez    t0, continue_s3
-loop_a_even:
+loop_a_even_outer:
     srli    a0, a0, 1
     andi    t0, a0, 1           # a & 1
-    beqz    t0, loop_a_even
+    beqz    t0, loop_a_even_outer
 
-    # do_while loop
+
 continue_s3:
 
     andi    t0, a1, 1           # b & 1
     bnez    t0, continue_s4
-loop_b_even:
+loop_b_even_outer:
     srli    a1, a1, 1
     andi    t0, a1, 1           # b & 1
-    beqz    t0, loop_b_even
+    beqz    t0, loop_b_even_outer
 
 continue_s4:
 
-    bgeu    a1, a0, a_lt_b      # b >= a: no swap
-    addi    t0, a0, 0
-    addi    a0, a1, 0
-    addi    a1, t0, 0
+    bgeu    a1, a0, a_lt_b      # b >= a: subtract a from b
+a_sub_b:
+    sub     a0, a0, a1          # a = a - b
+loop_a_even_inner:
+    srli    a0, a0, 1
+    andi    t0, a0, 1
+    beqz    t0, loop_a_even_inner
+    bltu    a1, a0, a_sub_b     # b < a: subtract again, else fall through
+
 a_lt_b:
-    sub     a1, a1, a0          # b = b - a (larger - smaller)
-    bnez    a1, loop_b_even     # odd - odd is even: skip the first b & 1 test
+    sub     a1, a1, a0          # b = b - a
+    bnez    a1, loop_b_even_outer   # reuse while (!(b & 1)) loop
 
     sll     a0, a0, a6
     ret
