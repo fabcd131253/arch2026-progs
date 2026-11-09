@@ -19,7 +19,6 @@ gcd_u32_asm:
 # zero_a:
     addi    a0, a1, 0
     ret
-
 zero_b:
     bne     a1, x0, continue_s1
     ret
@@ -65,8 +64,8 @@ continue_s4:
     addi    a0, a1, 0
     addi    a1, t0, 0
 a_lt_b:
-    sub     a1, a1, a0
-    bnez    a1, continue_s3
+    sub     a1, a1, a0          # b = b - a (larger - smaller)
+    bnez    a1, loop_b_even     # odd - odd is even: skip the first b & 1 test
 
     sll     a0, a0, a6
     ret
