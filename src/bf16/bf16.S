@@ -9,17 +9,17 @@
 
     .text
 
-# bf16_from_f32_asm registers: a0 = f32bits, t0 = the exponent, then the
-# rounding increment, t1 = 0xFF, then 0x7FFF.
+# bf16_from_f32_asm registers: a0 = f32bits, then the result; t0 = the
+# exponent field in place, then the rounding increment; t1 = 0x7F800000 (the
+# exponent mask, also its all-ones value), then 0x7FFF.
     .globl  bf16_from_f32_asm
     .type   bf16_from_f32_asm, @function
     .align  2
 bf16_from_f32_asm:
 
-    srli    t0, a0, 23
-    li      t1, 0xFF
-    and     t0, t0, t1              # (f32bits >> 23) & 0xFF
-    beq     t0, t1, return
+    lui     t1, 0x7F800
+    and     t0, a0, t1              # t0 = f32bits & 0x7F800000 (exponent field)
+    beq     t0, t1, return          # exponent all ones: Inf or NaN, no rounding
 
     srli    t0, a0, 16
     andi    t0, t0, 1               # (f32bits >> 16) & 1
